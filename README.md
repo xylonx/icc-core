@@ -1,5 +1,5 @@
-# go-template
+# Image Collection Center Core
 
-a template repo to help me start a golang project quickly. 
+ICC(Image Collection Center) core. it stores the image info with tags and issues the Pre-Signed uploading and downloading urls to manage the real image storage. The core backend part. 
 
-Generally, use yaml config file with paring by viper. Use cobra to make the project start as a normal command line tool.
+The api is exported as `protobuf` defined in `${workspaceRoot}/proto` while http api is also exported for frontend using.
