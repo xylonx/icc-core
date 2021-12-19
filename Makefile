@@ -1,4 +1,4 @@
-PROJECT:=
+PROJECT:=icc-core
 CONFIG_FILE:=config.yaml
 GO_MODULE_STATE:=$(shell go env GO111MODULE)
 GO_PROXY:=$(shell go env GOPROXY)
