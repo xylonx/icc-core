@@ -1,2 +1,4 @@
+.vscode/
+
 config*.yaml
 !config.default.yaml
