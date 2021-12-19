@@ -1,14 +1,21 @@
 package cmd
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/spf13/cobra"
 
-	"github.com/xylonx/go-template/internal/config"
+	"github.com/xylonx/icc-core/internal/config"
+	"github.com/xylonx/icc-core/internal/service"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "",
-	Short: "",
+	Use:   "icc-core",
+	Short: "Image Collection Center - core service",
 	PreRunE: func(cmd *cobra.Command, args []string) (err error) {
 		err = config.Setup(cfgFile)
 		if err != nil {
@@ -33,5 +40,18 @@ func Execute() error {
 }
 
 func run() error {
+
+	service.StartService()
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGTERM)
+
+	<-sig
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	service.StopService(ctx)
+
+
 	return nil
 }

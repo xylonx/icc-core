@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/xylonx/go-template/cmd"
+	"github.com/xylonx/icc-core/cmd"
 )
 
 func main() {
