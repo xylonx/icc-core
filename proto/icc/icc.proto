@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+option go_package = "github.com/xylonx/icc-core/internal/pb/icc";
+
+package icc;
+
+message PreSignObjectRequest {
+    // ObjectID - generally, it is equal to filename
+    //
+    // For better robustness, ICC will generate an unique ID to identify the object.
+    // Using ForceObjectID and specifying ObjectID to override this behavior and
+    // defined the objectID by yourself.
+    optional bool ForceObjectID = 3;
+    optional string ObjectID    = 1;
+
+    // ExpireSeconds - specifies how long the object will expire
+    uint32 ExpireSeconds = 2;
+}
+
+message PreSignObjectResponse {
+    // Status - more specifically, the StatusCode to identity the process status
+    // generally, Status == 0 means request successes.
+    int32 Status     = 1;
+    string Message   = 2;
+    PreSignData Data = 3;
+}
+
+message PreSignData {
+    // ObjectID - the unique ID of the object
+    // If ForceObjectID is false, the ObjectID is the unique ID generate by ICC
+    // else, the objectID is the ID defined in PreSignObjectRequest
+    string ObjectID = 1;
+}
+
+message UpsertImageRequest {
+    string ObjectID   = 1;
+    repeated Tag Tags = 2;
+
+    // ExternalID - optional ID to identity an image.
+    // Usually, it is no need to set it unless user wants.
+    optional string ExternalID = 3;
+}
+
+message Tag {
+    // Name - typically, using English as its standard name
+    string Name           = 1;
+    repeated string Alias = 2;
+}
+
+message UpsertImageResponse {
+    // Status - more specifically, the StatusCode to identity the process status
+    // generally, Status == 0 means request successes.
+    int32 Status   = 1;
+    string Message = 2;
+}
+
+service ICC {
+    // Issue Pre-Sign request
+    // For Pre-Sign upload request, the client should send HTTP PUT request
+    // For Pre-Sign download request, the client should send HTTP GET request
+    rpc IssuePreSignUpload(PreSignObjectRequest) returns (PreSignObjectResponse);
+    rpc IssuePreSignDownload(PreSignObjectRequest) returns (PreSignObjectResponse);
+
+    rpc UpsertImageWithTags(UpsertImageRequest) returns (UpsertImageResponse);
+}
