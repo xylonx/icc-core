@@ -1,0 +1,49 @@
+# application - configure the server
+application:
+    # grpc bind host
+    grpc_host: 0.0.0.0
+    # grpc bind port
+    grpc_port: 30000
+    # http bind host
+    http_host: 0.0.0.0
+    # http bind port
+    http_port: 5000
+    # http server read timeout. if read(body) action exceeds, it will close the connection
+    # default value is 60
+    http_read_timeout_seconds: 60
+    # http server read timeout. if write(body) action exceeds, it will close the connection
+    # default value is 60
+    http_write_timeout_seconds: 60
+
+# database - configure database connection
+database:
+    # using postgres database
+    # visit gorm connecting to database(https://gorm.io/docs/connecting_to_the_database.html)
+    # for more information
+    postgres:
+        # postgres database dsn
+        dsn: host= user= password= dbname=icccore port=5432 sslmode=disable TimeZone=Asia/Shanghai
+        # database max open connection
+        # default value is 10
+        max_open_conn: 10
+        # database max idle connection keeping
+        # default value is 100
+        max_idle_conn: 100
+        # database max connection keeping seconds
+        # default value is 600
+        max_life_seconds: 600
+
+# storage - configure image storage
+storage:
+    # using s3 param
+    s3:
+        # s3 endpoint
+        endpoint:
+        # s3 access id
+        access_id:
+        # s3 access key
+        access_secret:
+        # s3 bucket
+        bucket:
+        # s3 region
+        region:
