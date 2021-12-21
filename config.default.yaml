@@ -14,6 +14,9 @@ application:
     # http server read timeout. if write(body) action exceeds, it will close the connection
     # default value is 60
     http_write_timeout_seconds: 60
+    # http allow origins - using for cors
+    http_allow_origins:
+        - https://icc.xylonx.com
 
 # database - configure database connection
 database:

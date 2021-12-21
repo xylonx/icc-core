@@ -6,12 +6,13 @@ package config
 
 type Setting struct {
 	Application struct {
-		GrpcHost                string `mapstructure:"grpc_host" json:"grpc_host" yaml:"grpc_host" `
-		GrpcPort                int64  `mapstructure:"grpc_port" json:"grpc_port" yaml:"grpc_port" `
-		HttpHost                string `mapstructure:"http_host" json:"http_host" yaml:"http_host" `
-		HttpPort                int64  `mapstructure:"http_port" json:"http_port" yaml:"http_port" `
-		HttpReadTimeoutSeconds  int64  `mapstructure:"http_read_timeout_seconds" json:"http_read_timeout_seconds" yaml:"http_read_timeout_seconds" `
-		HttpWriteTimeoutSeconds int64  `mapstructure:"http_write_timeout_seconds" json:"http_write_timeout_seconds" yaml:"http_write_timeout_seconds" `
+		GrpcHost                string   `mapstructure:"grpc_host" json:"grpc_host" yaml:"grpc_host" `
+		GrpcPort                int64    `mapstructure:"grpc_port" json:"grpc_port" yaml:"grpc_port" `
+		HttpAllowOrigins        []string `mapstructure:"http_allow_origins" json:"http_allow_origins" yaml:"http_allow_origins" `
+		HttpHost                string   `mapstructure:"http_host" json:"http_host" yaml:"http_host" `
+		HttpPort                int64    `mapstructure:"http_port" json:"http_port" yaml:"http_port" `
+		HttpReadTimeoutSeconds  int64    `mapstructure:"http_read_timeout_seconds" json:"http_read_timeout_seconds" yaml:"http_read_timeout_seconds" `
+		HttpWriteTimeoutSeconds int64    `mapstructure:"http_write_timeout_seconds" json:"http_write_timeout_seconds" yaml:"http_write_timeout_seconds" `
 	} `mapstructure:"application" json:"application" yaml:"application" `
 	Database struct {
 		Postgres struct {

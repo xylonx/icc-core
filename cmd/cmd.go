@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/xylonx/icc-core/internal/config"
+	"github.com/xylonx/icc-core/internal/core"
 	"github.com/xylonx/icc-core/internal/service"
 )
 
@@ -18,6 +19,11 @@ var rootCmd = &cobra.Command{
 	Short: "Image Collection Center - core service",
 	PreRunE: func(cmd *cobra.Command, args []string) (err error) {
 		err = config.Setup(cfgFile)
+		if err != nil {
+			return err
+		}
+
+		err = core.Setup()
 		if err != nil {
 			return err
 		}
@@ -51,7 +57,6 @@ func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	service.StopService(ctx)
-
 
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/xylonx/icc-core/internal/core"
 	"gorm.io/gorm"
@@ -32,6 +33,29 @@ func (*RichImage) TableName() string {
 	return "image"
 }
 
+func (i *RichImage) InsertImages() (err error) {
+	if i == nil {
+		return ErrNilMethodReceiver
+	}
+
+	if i.ImageID == "" {
+		// i.ImageID, err = uuid.NewUUID()
+		var id uuid.UUID
+		id, err = uuid.NewUUID()
+		if err != nil {
+			return
+		}
+
+		i.ImageID = id.String()
+	}
+
+	if err = core.DB.Create(i).Error; err != nil {
+		return err
+	}
+
+	return
+}
+
 func (i *RichImage) UpsertTags() error {
 	if i == nil {
 		return ErrNilMethodReceiver
@@ -47,30 +71,16 @@ func (i *RichImage) UpsertTags() error {
 	return nil
 }
 
-func (i *RichImage) GetRichImagesBefore(limit int) (imgs []RichImage, err error) {
+func (i *RichImage) GetRichImages(limit int) (images []RichImage, err error) {
 	if i == nil {
 		return nil, ErrNilMethodReceiver
 	}
+
 	if limit <= 0 || limit > queryMaxLimit {
 		limit = queryMaxLimit
 	}
 
-	if err = core.DB.Where("updated_at < ?", i.CreatedAt).Limit(limit).Find(&imgs).Error; err != nil {
-		return
-	}
-
-	return
-}
-
-func (i *RichImage) GetRichImagesByTags(limit int) (imgs []RichImage, err error) {
-	if i == nil {
-		return nil, ErrNilMethodReceiver
-	}
-	if i.Tags == nil {
-		return nil, ErrNilTag
-	}
-
-	if err = core.DB.Where("tags @> ?", i.Tags).Limit(limit).Find(&imgs).Error; err != nil {
+	if err = core.DB.Where("updated_at < ? AND tags @> ?", i.UpdatedAt, i.Tags).Limit(limit).Find(&images).Error; err != nil {
 		return
 	}
 
