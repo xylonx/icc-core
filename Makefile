@@ -1,5 +1,5 @@
 PROJECT:=icc-core
-CONFIG_FILE:=config.yaml
+CONFIG_FILE:=config.local.yaml
 GO_MODULE_STATE:=$(shell go env GO111MODULE)
 GO_PROXY:=$(shell go env GOPROXY)
 
@@ -20,6 +20,9 @@ ifeq ($(GO_PROXY), https://proxy.golang.org,direct)
 	go env -w GOPROXY="https://goproxy.cn,direct"
 endif
 	go mod tidy
+
+server: build
+	./${PROJECT} -c ${CONFIG_FILE}
 
 clean:
 	rm -rf ${PROJECT}
