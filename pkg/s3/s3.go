@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -15,16 +16,18 @@ var (
 )
 
 type Client struct {
-	S3Client *s3.Client
-	Bucket   string
+	S3Client      *s3.Client
+	PreSignClient *s3.PresignClient
+	Bucket        string
 }
 
 type Option struct {
-	Endpoint     string
-	AccessID     string
-	AccessSecret string
-	BucketName   string
-	Region       string
+	Endpoint       string
+	AccessID       string
+	AccessSecret   string
+	BucketName     string
+	Region         string
+	PreSignExpires time.Duration
 }
 
 func NewS3Client(opt *Option) (*Client, error) {
@@ -49,5 +52,9 @@ func NewS3Client(opt *Option) (*Client, error) {
 		o.UsePathStyle = true
 	})
 
-	return &Client{S3Client: client, Bucket: opt.BucketName}, nil
+	presc := s3.NewPresignClient(client, func(po *s3.PresignOptions) {
+		po.Expires = opt.PreSignExpires
+	})
+
+	return &Client{S3Client: client, PreSignClient: presc, Bucket: opt.BucketName}, nil
 }
