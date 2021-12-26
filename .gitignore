@@ -2,3 +2,5 @@
 
 config*.yaml
 !config.default.yaml
+
+icc-core
