@@ -17,6 +17,10 @@ application:
     # http allow origins - using for cors
     http_allow_origins:
         - https://icc.xylonx.com
+    # http session secret - encrypted session store
+    http_session_secret: secret
+    # http session redirect page - redirect page for those not logging in user
+    http_session_redirect_page: https://icc.xylonx.com
 
 # database - configure database connection
 database:
@@ -35,9 +39,17 @@ database:
         # database max connection keeping seconds
         # default value is 600
         max_life_seconds: 600
+    # using redis in-memory database
+    # mainly used to store session message
+    redis:
+        dsn: redis://root:password@127.0.0.1:6379/2
 
 # storage - configure image storage
 storage:
+    # cdn host - using for generated cdn image link
+    cdn_host:
+    # sign upload seconds - duration for signing upload
+    sign_upload_seconds: 600
     # using s3 param
     s3:
         # s3 endpoint
