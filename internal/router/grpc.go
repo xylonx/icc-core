@@ -1,19 +1,15 @@
 package router
 
 import (
-	"net"
-
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/xylonx/icc-core/internal/handler"
 	"github.com/xylonx/icc-core/internal/proto/icc"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 )
 
-func InitRPCServer(lis net.Listener) *grpc.Server {
-
+func InitRPCServer() *grpc.Server {
 	// ! it's not pretty safe that just using http.
 	// TODO: upgrade it to https when call it out of server
 	s := grpc.NewServer(

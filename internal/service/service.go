@@ -20,7 +20,6 @@ var (
 )
 
 func StartService() error {
-
 	httpAddr := fmt.Sprintf("%s:%d", config.Config.Application.HttpHost, config.Config.Application.HttpPort)
 	grpcAddr := fmt.Sprintf("%s:%d", config.Config.Application.GrpcHost, config.Config.Application.GrpcPort)
 
@@ -34,8 +33,9 @@ func StartService() error {
 		Addr:         httpAddr,
 		ReadTimeout:  time.Duration(config.Config.Application.HttpReadTimeoutSeconds) * time.Second,
 		WriteTimeout: time.Duration(config.Config.Application.HttpWriteTimeoutSeconds) * time.Second,
+		AllowOrigins: config.Config.Application.HttpAllowOrigins,
 	})
-	grpcServer = router.InitRPCServer(grpcLis)
+	grpcServer = router.InitRPCServer()
 
 	go func() {
 		zapx.Info("start http server", zap.String("host", httpAddr))

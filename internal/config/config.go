@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/spf13/viper"
-
 	"github.com/xylonx/zapx"
 	"go.uber.org/zap"
 )
@@ -10,6 +9,8 @@ import (
 var Config *Setting
 
 func Setup(cfgFile string) error {
+	Config = new(Setting)
+
 	v := viper.New()
 
 	v.SetConfigFile(cfgFile)
