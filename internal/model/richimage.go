@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	ErrNilMethodReceiver    = errors.New(" method receiver is nil")
+	ErrNilMethodReceiver    = errors.New("method receiver is nil")
 	ErrNilImageID           = errors.New("image is nil")
 	ErrNilTag               = errors.New("tag is nil")
 	ErrUnsupportedImageType = errors.New("image type is not supported now")
@@ -45,7 +45,7 @@ func (*RichImage) TableName() string {
 	return "image"
 }
 
-func (i *RichImage) InsertImages() (err error) {
+func (i *RichImage) InsertImages(ctx context.Context) (err error) {
 	if i == nil {
 		return ErrNilMethodReceiver
 	}
@@ -60,14 +60,16 @@ func (i *RichImage) InsertImages() (err error) {
 		i.ImageID = id.String()
 	}
 
-	if err = core.DB.Create(i).Error; err != nil {
+	db := core.DB.WithContext(ctx)
+
+	if err = db.Create(i).Error; err != nil {
 		return err
 	}
 
 	return
 }
 
-func (i *RichImage) UpsertTags() error {
+func (i *RichImage) UpsertTags(ctx context.Context) error {
 	if i == nil {
 		return ErrNilMethodReceiver
 	}
@@ -75,14 +77,16 @@ func (i *RichImage) UpsertTags() error {
 		return ErrNilImageID
 	}
 
-	if err := core.DB.Clauses(clause.OnConflict{UpdateAll: true}).Create(i).Error; err != nil {
+	db := core.DB.WithContext(ctx)
+
+	if err := db.Clauses(clause.OnConflict{UpdateAll: true}).Create(i).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *RichImage) GetRichImages(limit int) (images []RichImage, err error) {
+func (i *RichImage) GetRichImages(ctx context.Context, limit int) (images []RichImage, err error) {
 	if i == nil {
 		return nil, ErrNilMethodReceiver
 	}
@@ -94,8 +98,14 @@ func (i *RichImage) GetRichImages(limit int) (images []RichImage, err error) {
 		limit = queryMaxLimit
 	}
 
-	if err = core.DB.Where("updated_at < ? AND tags @> ?", i.UpdatedAt, pq.Array(i.Tags)).
-		Limit(limit).Find(&images).Statement.Error; err != nil {
+	db := core.DB.WithContext(ctx)
+
+	if i.Tags == nil {
+		err = db.Table(i.TableName()).Where("updated_at < ?", i.UpdatedAt).Limit(limit).Scan(&images).Error
+	} else {
+		err = db.Table(i.TableName()).Where("updated_at < ? AND tags @> ?", i.UpdatedAt, pq.Array(i.Tags)).Limit(limit).Scan(&images).Error
+	}
+	if err != nil {
 		return
 	}
 
