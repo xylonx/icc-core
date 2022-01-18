@@ -14,13 +14,11 @@ application:
     # http server read timeout. if write(body) action exceeds, it will close the connection
     # default value is 60
     http_write_timeout_seconds: 60
+    # admin token - used to generated auth Bearer token
+    admin_token:
     # http allow origins - using for cors
     http_allow_origins:
         - https://icc.xylonx.com
-    # http session secret - encrypted session store
-    http_session_secret: secret
-    # http session redirect page - redirect page for those not logging in user
-    http_session_redirect_page: https://icc.xylonx.com
 
 # database - configure database connection
 database:
@@ -39,10 +37,6 @@ database:
         # database max connection keeping seconds
         # default value is 600
         max_life_seconds: 600
-    # using redis in-memory database
-    # mainly used to store session message
-    redis:
-        dsn: redis://root:password@127.0.0.1:6379/2
 
 # storage - configure image storage
 storage:

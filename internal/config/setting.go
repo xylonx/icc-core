@@ -6,14 +6,13 @@ package config
 
 type Setting struct {
 	Application struct {
+		AdminToken              string   `mapstructure:"admin_token" json:"admin_token" yaml:"admin_token" `
 		GrpcHost                string   `mapstructure:"grpc_host" json:"grpc_host" yaml:"grpc_host" `
 		GrpcPort                int64    `mapstructure:"grpc_port" json:"grpc_port" yaml:"grpc_port" `
 		HttpAllowOrigins        []string `mapstructure:"http_allow_origins" json:"http_allow_origins" yaml:"http_allow_origins" `
 		HttpHost                string   `mapstructure:"http_host" json:"http_host" yaml:"http_host" `
 		HttpPort                int64    `mapstructure:"http_port" json:"http_port" yaml:"http_port" `
 		HttpReadTimeoutSeconds  int64    `mapstructure:"http_read_timeout_seconds" json:"http_read_timeout_seconds" yaml:"http_read_timeout_seconds" `
-		HttpSessionRedirectPage string   `mapstructure:"http_session_redirect_page" json:"http_session_redirect_page" yaml:"http_session_redirect_page" `
-		HttpSessionSecret       string   `mapstructure:"http_session_secret" json:"http_session_secret" yaml:"http_session_secret" `
 		HttpWriteTimeoutSeconds int64    `mapstructure:"http_write_timeout_seconds" json:"http_write_timeout_seconds" yaml:"http_write_timeout_seconds" `
 	} `mapstructure:"application" json:"application" yaml:"application" `
 	Database struct {
@@ -23,9 +22,6 @@ type Setting struct {
 			MaxLifeSeconds int64  `mapstructure:"max_life_seconds" json:"max_life_seconds" yaml:"max_life_seconds" `
 			MaxOpenConn    int64  `mapstructure:"max_open_conn" json:"max_open_conn" yaml:"max_open_conn" `
 		} `mapstructure:"postgres" json:"postgres" yaml:"postgres" `
-		Redis struct {
-			Dsn string `mapstructure:"dsn" json:"dsn" yaml:"dsn" `
-		} `mapstructure:"redis" json:"redis" yaml:"redis" `
 	} `mapstructure:"database" json:"database" yaml:"database" `
 	Storage struct {
 		CdnHost string `mapstructure:"cdn_host" json:"cdn_host" yaml:"cdn_host" `
