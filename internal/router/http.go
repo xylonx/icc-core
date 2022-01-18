@@ -5,9 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/xylonx/icc-core/internal/core"
 	"github.com/xylonx/icc-core/internal/handler"
 )
 
@@ -33,12 +31,18 @@ func InitHttpServer(o *HttpOption) *http.Server {
 	subrouter := r.Group("/api/v1")
 	subrouter.GET("/images", handler.GetImagesHandler)
 
-	adminrouter := subrouter.Group("/admin")
-	adminrouter.Use(sessions.Sessions("icc", core.RedisSessionStore))
-	adminrouter.Use(sessionMiddleware)
-	adminrouter.POST("/image", handler.AddImageHandler)
-	adminrouter.POST("/image/upload", handler.GeneratePreSignUpload)
-	adminrouter.PUT("/image/tag", handler.UpsertImageTag)
+	auth := subrouter.Group("/auth")
+	auth.Use(handler.HttpAuthMiddleware())
+
+	auth.GET("/ping", func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+	})
+
+	auth.POST("/image/complete", handler.AddImageHandler)
+	auth.POST("/image/upload", handler.GeneratePreSignUpload)
+	auth.PUT("/image/tag", handler.UpsertImageTag)
+
+	auth.POST("/token", handler.GenereateToken)
 
 	return &http.Server{
 		Addr:         o.Addr,
@@ -46,13 +50,4 @@ func InitHttpServer(o *HttpOption) *http.Server {
 		ReadTimeout:  o.ReadTimeout,
 		WriteTimeout: o.WriteTimeout,
 	}
-}
-
-func sessionMiddleware(*gin.Context) {
-	// sess := sessions.Default(ctx)
-	// if sess.Get("user") == nil {
-	// 	ctx.Redirect(http.StatusSeeOther, config.Config.Application.HttpSessionRedirectPage)
-	// 	ctx.Abort()
-	// 	return
-	// }
 }
