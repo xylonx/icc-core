@@ -1,16 +1,26 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/segmentio/ksuid"
 	"github.com/xylonx/icc-core/internal/config"
 	"github.com/xylonx/icc-core/internal/model"
 	"github.com/xylonx/zapx"
 	"go.uber.org/zap"
 )
+
+var (
+	ErrAuthHeaderNotFound = errors.New("auth header not found")
+	ErrPermissionDenied   = errors.New("permission denied")
+)
+
+var kuid *ksuid.KSUID
 
 type GetImagesRequest struct {
 	Before time.Time `json:"before" form:"before" time_format:"unix"`
@@ -39,6 +49,32 @@ type UpsertImageTagRequest struct {
 	Tags    []string `json:"tags"`
 }
 
+func HttpAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			zapx.Error("auth header missing", zap.String("Authorization", authHeader))
+			respAbortWithForbiddenError(c, ErrAuthHeaderNotFound)
+			return
+		}
+
+		token := authHeader[7:]
+
+		t := model.AuthToken{
+			Token: token,
+		}
+
+		if err := t.TokenExists(c.Request.Context()); err != nil {
+			zapx.Error("check token exists failed", zap.Error(err), zap.String("token", token))
+			respAbortWithForbiddenError(c, err)
+			return
+		}
+
+		ctx := context.WithValue(c.Request.Context(), "ICCAuthToken", token) // nolint:staticcheck
+		c.Request = c.Request.Clone(ctx)
+	}
+}
+
 func GetImagesHandler(ctx *gin.Context) {
 	var req GetImagesRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -46,7 +82,11 @@ func GetImagesHandler(ctx *gin.Context) {
 		return
 	}
 
-	req.Tags = strings.Split(req.Tag, ",")
+	if req.Tag == "" {
+		req.Tags = nil
+	} else {
+		req.Tags = strings.Split(req.Tag, ",")
+	}
 
 	zapx.Info("get request param", zap.Any("req", req))
 
@@ -55,7 +95,7 @@ func GetImagesHandler(ctx *gin.Context) {
 		Tags:      req.Tags,
 	}
 
-	images, err := ri.GetRichImages(int(req.Limit))
+	images, err := ri.GetRichImages(ctx.Request.Context(), int(req.Limit))
 	if err != nil {
 		respDBError(ctx, err)
 		return
@@ -72,7 +112,7 @@ func GetImagesHandler(ctx *gin.Context) {
 		resp[i].Tags = images[i].Tags
 	}
 
-	respOK(ctx, images)
+	respOK(ctx, resp)
 }
 
 func AddImageHandler(ctx *gin.Context) {
@@ -87,7 +127,7 @@ func AddImageHandler(ctx *gin.Context) {
 		ExternalID: req.ExternalID,
 	}
 
-	if err := ri.InsertImages(); err != nil {
+	if err := ri.InsertImages(ctx.Request.Context()); err != nil {
 		respDBError(ctx, err)
 		return
 	}
@@ -112,7 +152,13 @@ func GeneratePreSignUpload(ctx *gin.Context) {
 		return
 	}
 
-	respOK(ctx, uri)
+	respOK(ctx, struct {
+		PresignedURI string `json:"presigned_uri"`
+		ImageID      string `json:"image_id"`
+	}{
+		PresignedURI: uri,
+		ImageID:      ri.ImageID,
+	})
 }
 
 func UpsertImageTag(ctx *gin.Context) {
@@ -127,10 +173,42 @@ func UpsertImageTag(ctx *gin.Context) {
 		Tags:    req.Tags,
 	}
 
-	if err := ri.UpsertTags(); err != nil {
+	if err := ri.UpsertTags(ctx.Request.Context()); err != nil {
 		respDBError(ctx, err)
 		return
 	}
 
 	respOK(ctx, ri)
+}
+
+func GenereateToken(ctx *gin.Context) {
+	authToken := ctx.Request.Context().Value("ICCAuthToken").(string) // nolint:forcetypeassert
+	if authToken != config.Config.Application.AdminToken {
+		respAbortWithForbiddenError(ctx, ErrPermissionDenied)
+		return
+	}
+
+	if kuid == nil {
+		uid, err := ksuid.NewRandom()
+		if err != nil {
+			zapx.Error("generate ksuid failed", zap.Error(err))
+			respUnknownError(ctx, err)
+			return
+		}
+
+		kuid = &uid
+	}
+
+	id := kuid.String()
+	nxtId := kuid.Next()
+	kuid = &nxtId
+
+	t := model.AuthToken{Token: id}
+	if err := t.InsertToken(ctx.Request.Context()); err != nil {
+		zapx.Error("insert token failed", zap.Error(err))
+		respDBError(ctx, err)
+		return
+	}
+
+	respOK(ctx, id)
 }
