@@ -3,7 +3,6 @@ package s3
 import (
 	"context"
 	"errors"
-	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -64,5 +63,8 @@ func NewS3Client(opt *Option) (*Client, error) {
 
 // FIXME: this is a simple solution for public bucket.
 func (c *Client) ConstructDownloadURL(_ context.Context, objectID string) string {
-	return path.Join(c.CDNHost, c.Bucket, objectID)
+	if c.CDNHost[len(c.CDNHost)-1] == '/' {
+		return c.CDNHost + c.Bucket + "/" + objectID
+	}
+	return c.CDNHost + "/" + c.Bucket + "/" + objectID
 }
