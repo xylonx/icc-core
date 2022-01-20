@@ -34,6 +34,7 @@ func Setup() (err error) {
 		AccessSecret:   config.Config.Storage.S3.AccessSecret,
 		BucketName:     config.Config.Storage.S3.Bucket,
 		Region:         config.Config.Storage.S3.Region,
+		CDNHost:        config.Config.Storage.CdnHost,
 		PreSignExpires: time.Duration(config.Config.Storage.SignUploadSeconds) * time.Second,
 	})
 	if err != nil {

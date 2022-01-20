@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"errors"
+	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,6 +20,7 @@ type Client struct {
 	S3Client      *s3.Client
 	PreSignClient *s3.PresignClient
 	Bucket        string
+	CDNHost       string
 }
 
 type Option struct {
@@ -27,6 +29,7 @@ type Option struct {
 	AccessSecret   string
 	BucketName     string
 	Region         string
+	CDNHost        string
 	PreSignExpires time.Duration
 }
 
@@ -56,5 +59,10 @@ func NewS3Client(opt *Option) (*Client, error) {
 		po.Expires = opt.PreSignExpires
 	})
 
-	return &Client{S3Client: client, PreSignClient: presc, Bucket: opt.BucketName}, nil
+	return &Client{S3Client: client, PreSignClient: presc, Bucket: opt.BucketName, CDNHost: opt.CDNHost}, nil
+}
+
+// FIXME: this is a simple solution for public bucket.
+func (c *Client) ConstructDownloadURL(_ context.Context, objectID string) string {
+	return path.Join(c.CDNHost, c.Bucket, objectID)
 }
