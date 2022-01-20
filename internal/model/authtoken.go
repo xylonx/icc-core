@@ -1,16 +1,15 @@
 package model
 
 import (
-	"context"
 	"errors"
 	"time"
 
-	"github.com/xylonx/icc-core/internal/core"
 	"gorm.io/gorm"
 )
 
 var (
-	ErrNilToken = errors.New("token is nil")
+	ErrNilToken         = errors.New("token is nil")
+	ErrNilUploadingSize = errors.New("uploading size is 0")
 )
 
 type AuthToken struct {
@@ -18,14 +17,15 @@ type AuthToken struct {
 	UpdatedAt time.Time      `json:"-"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Token string `gorm:"column:token;primaryKey"`
+	Token          string `gorm:"column:token;primaryKey"`
+	UploadingBytes int64  `gorm:"column:uploading_bytes"`
 }
 
 func (*AuthToken) TableName() string {
 	return "auth_token"
 }
 
-func (t *AuthToken) InsertToken(ctx context.Context) error {
+func (t *AuthToken) insertToken(db *gorm.DB) error {
 	if t == nil {
 		return ErrNilMethodReceiver
 	}
@@ -33,8 +33,6 @@ func (t *AuthToken) InsertToken(ctx context.Context) error {
 	if t.Token == "" {
 		return ErrNilToken
 	}
-
-	db := core.DB.WithContext(ctx)
 
 	if err := db.Create(t).Error; err != nil {
 		return err
@@ -43,7 +41,7 @@ func (t *AuthToken) InsertToken(ctx context.Context) error {
 	return nil
 }
 
-func (t *AuthToken) TokenExists(ctx context.Context) error {
+func (t *AuthToken) tokenExists(db *gorm.DB) error {
 	if t == nil {
 		return ErrNilMethodReceiver
 	}
@@ -52,9 +50,28 @@ func (t *AuthToken) TokenExists(ctx context.Context) error {
 		return ErrNilToken
 	}
 
-	db := core.DB.WithContext(ctx)
-
 	if err := db.First(t).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *AuthToken) addUploadingBytes(db *gorm.DB) error {
+	if t == nil {
+		return ErrNilMethodReceiver
+	}
+
+	if t.Token == "" {
+		return ErrNilToken
+	}
+
+	if t.UploadingBytes == 0 {
+		return ErrNilUploadingSize
+	}
+
+	if err := db.Model(t).Where("token = ?", t.Token).
+		Update("uploading_bytes", gorm.Expr("uploading_bytes + ?", t.UploadingBytes)).Error; err != nil {
 		return err
 	}
 
