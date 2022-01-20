@@ -25,6 +25,7 @@ func InitHttpServer(o *HttpOption) *http.Server {
 	// config cors
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = o.AllowOrigins
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
 	r.Use(cors.New(corsConfig))
 
 	// register routers
@@ -40,7 +41,10 @@ func InitHttpServer(o *HttpOption) *http.Server {
 
 	auth.POST("/image/complete", handler.AddImageHandler)
 	auth.POST("/image/upload", handler.GeneratePreSignUpload)
-	auth.PUT("/image/tag", handler.UpsertImageTag)
+
+	auth.GET("/image/tag", handler.GetAllTags)
+	auth.POST("/image/tag", handler.AddTagToImage)
+	auth.DELETE("/image/tag", handler.DeleteTagToImage)
 
 	auth.POST("/token", handler.GenereateToken)
 
