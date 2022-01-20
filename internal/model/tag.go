@@ -14,12 +14,12 @@ var (
 )
 
 type Tag struct {
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time      `json:"-"`
+	UpdatedAt time.Time      `json:"-"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Aliases pq.StringArray `gorm:"column:aliases"`
-	Name    string         `gorm:"column:name;primaryKey"`
+	Aliases pq.StringArray `gorm:"column:aliases;type:text[]" json:"aliases"`
+	TagName string         `gorm:"column:tag_name;primaryKey" json:"tag_name"`
 }
 
 func (*Tag) TableName() string {
@@ -27,7 +27,7 @@ func (*Tag) TableName() string {
 }
 
 func getAllTags(db *gorm.DB) (tags []Tag, err error) {
-	if err = db.Find(&tags).Error; err != nil {
+	if err = db.Table("tag").Find(&tags).Error; err != nil {
 		return
 	}
 	return
@@ -36,7 +36,7 @@ func getAllTags(db *gorm.DB) (tags []Tag, err error) {
 func insertTags(db *gorm.DB, tagNames []string) error {
 	tags := make([]Tag, len(tagNames))
 	for i := range tags {
-		tags[i].Name = tagNames[i]
+		tags[i].TagName = tagNames[i]
 	}
-	return db.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&tags).Error
+	return db.Clauses(clause.OnConflict{DoNothing: true}).Table("tag").Create(&tags).Error
 }

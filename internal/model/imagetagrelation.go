@@ -10,13 +10,17 @@ type ImageTagRelation struct {
 	TagName string `gorm:"column:tag_name;primaryKey"`
 }
 
+func (*ImageTagRelation) TableName() string {
+	return "image_tag_relation"
+}
+
 func addTagsForImage(db *gorm.DB, imageID string, tags []string) error {
 	itrs := make([]ImageTagRelation, len(tags))
 	for i := range itrs {
 		itrs[i].ImageID = imageID
 		itrs[i].TagName = tags[i]
 	}
-	return db.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&itrs).Error
+	return db.Clauses(clause.OnConflict{DoNothing: true}).Table("image_tag_relation").Create(&itrs).Error
 }
 
 func deleteTagsForImage(db *gorm.DB, imageID string, tags []string) error {
