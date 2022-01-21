@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-
 	"github.com/xylonx/icc-core/internal/config"
 	"github.com/xylonx/icc-core/internal/core"
 	"github.com/xylonx/icc-core/internal/service"
@@ -46,8 +45,9 @@ func Execute() error {
 }
 
 func run() error {
-
-	service.StartService()
+	if err := service.StartService(); err != nil {
+		return err
+	}
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGTERM)
