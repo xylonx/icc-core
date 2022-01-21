@@ -1,9 +1,22 @@
 version: '3.9'
 
 services:
-  x-telebot:
-    image: xylonx/icc-core:v0.1.0
+  icc-core:
+    image: xylonx/icc-core:v0.1.1
+    container_name: icc-core
     volumes:
-      - ${PWD}/config.yaml:/opt/x-telebot/config.yaml
+      - ${PWD}/config.yaml:/opt/icc-core/config.yaml
+    environment:
+      - GIN_MODE=release
     ports:
       - 5000:5000
+
+  psql:
+    image: postgres:14
+    restart: always
+    container_name: db_postgres
+    volumes:
+      - $PWD/data/postgres:/var/lib/postgresql/data
+    environment:
+      LANG: C.UTF-8
+      POSTGRES_PASSWORD: ""
