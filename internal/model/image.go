@@ -17,12 +17,11 @@ type Image struct {
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 
-	// auto increment. used to choose random one
-	SeqID int64 `gorm:"column:seq_id"`
-
 	ImageID    string `gorm:"column:image_id;primaryKey"`
 	ExternalID string `gorm:"column:external_id"`
 	MD5Sum     string `gorm:"column:md5_sum;unique"` // for shrinking file duplication
+
+	Owner string `gorm:"column:owner"`
 }
 
 func (*Image) TableName() string {
@@ -63,4 +62,20 @@ func (i *Image) checkMD5(db *gorm.DB) (err error) {
 		return err
 	}
 	return ErrDuplicateImage
+}
+
+func (i *Image) deleteImage(db *gorm.DB) error {
+	if i == nil {
+		return ErrNilMethodReceiver
+	}
+
+	if i.ImageID == "" {
+		return ErrNilImageID
+	}
+
+	if err := db.Model(i).Where("image_id = ?", i.ImageID).Delete(&i).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

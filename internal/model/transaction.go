@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
+	"github.com/xylonx/icc-core/internal/config"
 	"github.com/xylonx/icc-core/internal/core"
 )
 
@@ -43,6 +44,12 @@ func GetRichImages(ctx context.Context, before time.Time, tags []string, limit i
 	db := core.DB.WithContext(ctx)
 	i := &RichImage{UpdatedAt: before, Limit: limit, Tags: tags}
 	return i.getRichImages(db)
+}
+
+func GetRandomImages(ctx context.Context, tags []string) (RichImage, error) {
+	db := core.DB.WithContext(ctx)
+	i := &RichImage{Tags: tags}
+	return i.getRandom(db)
 }
 
 func GetALlTags(ctx context.Context) ([]Tag, error) {
@@ -85,7 +92,7 @@ func DeleteTagsForImage(ctx context.Context, imageID string, tags []string) erro
 
 func InsertRichImage(ctx context.Context, token, imageID, md5 string, tags []string, imgBytes int64) error {
 	db := core.DB.WithContext(ctx)
-	i := &Image{MD5Sum: md5, ImageID: imageID}
+	i := &Image{MD5Sum: md5, ImageID: imageID, Owner: token}
 	t := &AuthToken{Token: token, UploadingBytes: imgBytes}
 	if tags == nil {
 		if err := i.insertImage(db); err != nil {
@@ -126,5 +133,36 @@ func AddTags(ctx context.Context, imageID string, tags []string) error {
 		return err
 	}
 	tx.Commit()
+	return nil
+}
+
+func DeleteRichImage(ctx context.Context, imageID, token string) error {
+	db := core.DB.WithContext(ctx)
+
+	i := &Image{ImageID: imageID}
+	if token != config.Config.Application.AdminToken {
+		i.Owner = token
+	}
+
+	tx := db.Begin()
+	if err := i.deleteImage(db); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := deleteImageAllTags(db, imageID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err := core.S3Client.S3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: &core.S3Client.Bucket,
+		Key:    &imageID,
+	})
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+
 	return nil
 }

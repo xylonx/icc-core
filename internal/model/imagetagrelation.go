@@ -24,5 +24,9 @@ func addTagsForImage(db *gorm.DB, imageID string, tags []string) error {
 }
 
 func deleteTagsForImage(db *gorm.DB, imageID string, tags []string) error {
-	return db.Where("image_id = ? AND tag_name IN ?", imageID, tags).Delete(ImageTagRelation{}).Error
+	return db.Where("image_id = ? AND tag_name IN ?", imageID, tags).Delete(&ImageTagRelation{}).Error
+}
+
+func deleteImageAllTags(db *gorm.DB, imageID string) error {
+	return db.Where("image_id = ?", imageID).Delete(&ImageTagRelation{}).Error
 }
