@@ -31,6 +31,7 @@ func InitHttpServer(o *HttpOption) *http.Server {
 	// register routers
 	subrouter := r.Group("/api/v1")
 	subrouter.GET("/images", handler.GetImagesHandler)
+	subrouter.GET("/images/random", handler.GetRandomImageHandler)
 
 	auth := subrouter.Group("/auth")
 	auth.Use(handler.HttpAuthMiddleware())
@@ -41,6 +42,7 @@ func InitHttpServer(o *HttpOption) *http.Server {
 
 	auth.POST("/image/complete", handler.AddImageHandler)
 	auth.POST("/image/upload", handler.GeneratePreSignUpload)
+	auth.DELETE("/image/:id", handler.DeleteRichImageHandler)
 
 	auth.GET("/image/tag", handler.GetAllTags)
 	auth.POST("/image/tag", handler.AddTagToImage)

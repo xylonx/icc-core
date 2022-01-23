@@ -75,8 +75,8 @@ func respUnknownError(ctx *gin.Context, err error) {
 	})
 }
 
-func respAbortWithForbiddenError(ctx *gin.Context, err error) {
-	ctx.AbortWithStatusJSON(http.StatusForbidden, UniformResponse{
+func respAbortWithUnauthError(ctx *gin.Context, err error) {
+	ctx.AbortWithStatusJSON(http.StatusUnauthorized, UniformResponse{
 		StatusCode: StatusNotAuthError,
 		Message:    err.Error(),
 	})

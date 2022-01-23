@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 	"time"
 
@@ -26,7 +27,6 @@ var kuid *ksuid.KSUID
 type GetImagesRequest struct {
 	Before time.Time `json:"before" form:"before" time_format:"unix"`
 	Tag    string    `json:"tag" form:"tag"`
-	Tags   []string  `json:"-" form:"tags"` // equal strings.Split(tag, ',')
 	Limit  uint      `json:"limit" form:"limit"`
 }
 
@@ -59,7 +59,7 @@ func HttpAuthMiddleware() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			zapx.Error("auth header missing", zap.String("Authorization", authHeader))
-			respAbortWithForbiddenError(c, ErrAuthHeaderNotFound)
+			respAbortWithUnauthError(c, ErrAuthHeaderNotFound)
 			return
 		}
 
@@ -67,7 +67,7 @@ func HttpAuthMiddleware() gin.HandlerFunc {
 
 		if err := model.CheckTokenExists(c.Request.Context(), token); err != nil {
 			zapx.Error("check token exists failed", zap.Error(err), zap.String("token", token))
-			respAbortWithForbiddenError(c, err)
+			respAbortWithUnauthError(c, err)
 			return
 		}
 
@@ -83,13 +83,12 @@ func GetImagesHandler(ctx *gin.Context) {
 		return
 	}
 
-	if req.Tag == "" {
-		req.Tags = nil
-	} else {
-		req.Tags = strings.Split(req.Tag, ",")
+	var tags []string
+	if req.Tag != "" {
+		tags = strings.Split(req.Tag, ",")
 	}
 
-	images, err := model.GetRichImages(ctx.Request.Context(), req.Before, req.Tags, int(req.Limit))
+	images, err := model.GetRichImages(ctx.Request.Context(), req.Before, tags, int(req.Limit))
 	if err != nil {
 		respDBError(ctx, err)
 		return
@@ -109,6 +108,29 @@ func GetImagesHandler(ctx *gin.Context) {
 	}
 
 	respOK(ctx, resp)
+}
+
+func GetRandomImageHandler(ctx *gin.Context) {
+	var req GetImagesRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		respParamBindingError(ctx, err)
+		return
+	}
+
+	var tags []string
+	if req.Tag != "" {
+		tags = strings.Split(req.Tag, ",")
+	}
+
+	image, err := model.GetRandomImages(ctx.Request.Context(), tags)
+	if err != nil {
+		zapx.Error("get random images failed", zap.Error(err))
+		respDBError(ctx, err)
+		return
+	}
+
+	uri := core.S3Client.ConstructDownloadURL(ctx.Request.Context(), image.ImageID)
+	ctx.Redirect(http.StatusFound, uri)
 }
 
 func AddImageHandler(ctx *gin.Context) {
@@ -146,6 +168,19 @@ func AddImageHandler(ctx *gin.Context) {
 		ImageURL: core.S3Client.ConstructDownloadURL(ctx.Request.Context(), req.ImageID),
 		Tags:     req.Tags,
 	})
+}
+
+func DeleteRichImageHandler(ctx *gin.Context) {
+	imageID := ctx.Param("id")
+
+	token := ctx.Request.Context().Value("ICCAuthToken").(string) //nolint:forcetypeassert
+	if err := model.DeleteRichImage(ctx.Request.Context(), imageID, token); err != nil {
+		zapx.Error("delete rich image failed", zap.Error(err))
+		respDBError(ctx, err)
+		return
+	}
+
+	respOK(ctx, "ok")
 }
 
 func GeneratePreSignUpload(ctx *gin.Context) {
@@ -225,7 +260,7 @@ func DeleteTagToImage(ctx *gin.Context) {
 func GenereateToken(ctx *gin.Context) {
 	authToken := ctx.Request.Context().Value("ICCAuthToken").(string) // nolint:forcetypeassert
 	if authToken != config.Config.Application.AdminToken {
-		respAbortWithForbiddenError(ctx, ErrPermissionDenied)
+		respAbortWithUnauthError(ctx, ErrPermissionDenied)
 		return
 	}
 
