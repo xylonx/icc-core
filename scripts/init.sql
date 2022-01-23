@@ -8,6 +8,7 @@ create table image(
     md5_sum text not null,
     unique(md5_sum)
 );
+create index idx_image_seq_id on image(seq_id);
 create index idx_image_deleted_at on image(deleted_at);
 create table tag (
     created_at timestamp with time zone not null,
@@ -49,3 +50,5 @@ create table auth_token (
     uploading_bytes int8 not null default(0)
 );
 create index idx_auth_token_deleted_at on auth_token(deleted_at);
+-- - for using tablesampling to select random rows
+-- CREATE EXTENSION tsm_system_rows;
