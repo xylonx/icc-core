@@ -22,8 +22,6 @@ var (
 	ErrPermissionDenied   = errors.New("permission denied")
 )
 
-var kuid *ksuid.KSUID
-
 type GetImagesRequest struct {
 	Before time.Time `json:"before" form:"before" time_format:"unix"`
 	Tag    string    `json:"tag" form:"tag"`
@@ -264,20 +262,13 @@ func GenereateToken(ctx *gin.Context) {
 		return
 	}
 
-	if kuid == nil {
-		uid, err := ksuid.NewRandom()
-		if err != nil {
-			zapx.Error("generate ksuid failed", zap.Error(err))
-			respUnknownError(ctx, err)
-			return
-		}
-
-		kuid = &uid
+	uid, err := ksuid.NewRandom()
+	if err != nil {
+		zapx.Error("generate ksuid failed", zap.Error(err))
+		respUnknownError(ctx, err)
+		return
 	}
-
-	id := kuid.String()
-	nxtId := kuid.Next()
-	kuid = &nxtId
+	id := uid.String()
 
 	if err := model.AddAuthToken(ctx.Request.Context(), id); err != nil {
 		zapx.Error("insert token failed", zap.Error(err))
