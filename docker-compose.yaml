@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   icc-core:
-    image: xylonx/icc-core:v0.1.1
+    image: xylonx/icc-core:v0.1.3
     container_name: icc-core
     volumes:
       - ${PWD}/config.yaml:/opt/icc-core/config.yaml
