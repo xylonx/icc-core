@@ -15,7 +15,6 @@ var (
 type Image struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	ImageID    string `gorm:"column:image_id;primaryKey"`
 	ExternalID string `gorm:"column:external_id"`

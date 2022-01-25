@@ -26,9 +26,8 @@ var (
 const queryMaxLimit = 100
 
 type RichImage struct {
-	CreatedAt time.Time      `json:"-"`
-	UpdatedAt time.Time      `json:"-"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time `json:"-"`
 
 	ImageID    string         `gorm:"column:image_id;primaryKey" json:"image_id"`
 	ExternalID string         `gorm:"column:external_id" json:"-"`
