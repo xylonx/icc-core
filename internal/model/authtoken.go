@@ -77,3 +77,24 @@ func (t *AuthToken) addUploadingBytes(db *gorm.DB) error {
 
 	return nil
 }
+
+func (t *AuthToken) shrinkUploadingBytes(db *gorm.DB) error {
+	if t == nil {
+		return ErrNilMethodReceiver
+	}
+
+	if t.Token == "" {
+		return ErrNilToken
+	}
+
+	if t.UploadingBytes == 0 {
+		return ErrNilUploadingSize
+	}
+
+	if err := db.Model(t).Where("token = ?", t.Token).
+		Update("uploading_bytes", gorm.Expr("uploading_bytes - ?", t.UploadingBytes)).Error; err != nil {
+		return err
+	}
+
+	return nil
+}

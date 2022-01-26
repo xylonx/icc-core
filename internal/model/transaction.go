@@ -139,22 +139,36 @@ func AddTags(ctx context.Context, imageID string, tags []string) error {
 func DeleteRichImage(ctx context.Context, imageID, token string) error {
 	db := core.DB.WithContext(ctx)
 
+	resp, err := core.S3Client.S3Client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: &core.S3Client.Bucket,
+		Key:    &imageID,
+	})
+	if err != nil {
+		return err
+	}
+
 	i := &Image{ImageID: imageID}
 	if token != config.Config.Application.AdminToken {
 		i.Owner = token
 	}
 
+	t := &AuthToken{Token: token, UploadingBytes: resp.ContentLength}
+
 	tx := db.Begin()
-	if err := i.deleteImage(db); err != nil {
+	if err := i.deleteImage(tx); err != nil {
 		tx.Rollback()
 		return err
 	}
-	if err := deleteImageAllTags(db, imageID); err != nil {
+	if err := deleteImageAllTags(tx, imageID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := t.shrinkUploadingBytes(tx); err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	_, err := core.S3Client.S3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+	_, err = core.S3Client.S3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: &core.S3Client.Bucket,
 		Key:    &imageID,
 	})
