@@ -46,12 +46,6 @@ func GetRichImages(ctx context.Context, before time.Time, tags []string, limit i
 	return i.getRichImages(db)
 }
 
-func GetRandomImages(ctx context.Context, tags []string) (RichImage, error) {
-	db := core.DB.WithContext(ctx)
-	i := &RichImage{Tags: tags}
-	return i.getRandom(db)
-}
-
 func GetALlTags(ctx context.Context) ([]Tag, error) {
 	db := core.DB.WithContext(ctx)
 	return getAllTags(db)
@@ -179,4 +173,26 @@ func DeleteRichImage(ctx context.Context, imageID, token string) error {
 	tx.Commit()
 
 	return nil
+}
+
+// ~~TODO~~: select a random row by using an auto-increment key now.
+// DONE
+
+// it is not efficient but suit for small dataset.
+// for big dataset, using tablesample like below for efficiency
+//
+// 1) enable tsr extension: `CREATE EXTENSION tsm_system_rows`
+// ~~2) make rich_image as a meterialed view~~
+// using natural join instead
+// 3) replace below random select to this: `select * from rich_image tablesample system_rows(1);`
+func GetRandomImages(ctx context.Context, _ []string) (RichImage, error) {
+	db := core.DB.WithContext(ctx)
+
+	img := RichImage{}
+
+	if err := db.Raw("select image.*, array_remove(array_agg(distinct tag_name order by tag_name), NULL) as tags from image tablesample system_rows(1) natural join image_tag_relation group by image.image_id").Scan(&img).Error; err != nil { //nolint:lll
+		return img, err
+	}
+
+	return img, nil
 }

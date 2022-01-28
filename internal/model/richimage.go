@@ -3,12 +3,9 @@ package model
 import (
 	"errors"
 	"math"
-	"math/rand"
 	"time"
 
 	"github.com/lib/pq"
-	"github.com/xylonx/zapx"
-	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -57,39 +54,6 @@ func (i *RichImage) getRichImages(db *gorm.DB) (images []RichImage, err error) {
 	} else {
 		err = db.Table(i.TableName()).Where("updated_at < ? AND tags @> ?", i.UpdatedAt, pq.Array(i.Tags)).
 			Order("updated_at desc").Limit(i.Limit).Scan(&images).Error
-	}
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-// TODO: select a random row by using an auto-increment key now.
-// it is not efficient but suit for small dataset.
-// for big dataset, using tablesample like below for efficiency
-//
-// 1) enable tsr extension: `CREATE EXTENSION tsm_system_rows`
-// 2) make rich_image as a meterialed view
-// 3) replace below random select to this: `select * from rich_image tablesample system_rows(1);`
-func (i *RichImage) getRandom(db *gorm.DB) (image RichImage, err error) {
-	if i == nil {
-		return image, ErrNilMethodReceiver
-	}
-
-	var maxSeq int64
-	err = db.Raw("select last_value from image_seq_id_seq").Scan(&maxSeq).Error
-	if err != nil {
-		return
-	}
-
-	seq := rand.Int63n(maxSeq)
-	zapx.Info("current seq", zap.Int64("seq", seq))
-
-	if i.Tags == nil {
-		err = db.Table(i.TableName()).Where("seq_id = ?", seq).Scan(&image).Error
-	} else {
-		err = db.Table(i.TableName()).Where("seq_id = ? AND tags @> ?", seq, pq.Array(i.Tags)).Scan(&image).Error
 	}
 	if err != nil {
 		return
