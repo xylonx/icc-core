@@ -20,10 +20,12 @@ const _ = grpc.SupportPackageIsVersion7
 type ICCClient interface {
 	// Issue Pre-Sign request
 	// For Pre-Sign upload request, the client should send HTTP PUT request
-	// For Pre-Sign download request, the client should send HTTP GET request
+	// ~~For Pre-Sign download request, the client should send HTTP GET request~~
 	IssuePreSignUpload(ctx context.Context, in *PreSignObjectRequest, opts ...grpc.CallOption) (*PreSignObjectResponse, error)
-	IssuePreSignDownload(ctx context.Context, in *PreSignObjectRequest, opts ...grpc.CallOption) (*PreSignObjectResponse, error)
-	UpsertImageWithTags(ctx context.Context, in *UpsertImageRequest, opts ...grpc.CallOption) (*UpsertImageResponse, error)
+	CompleteUpload(ctx context.Context, in *CompleteUploadRequest, opts ...grpc.CallOption) (*CompleteUploadResponse, error)
+	GetImage(ctx context.Context, in *GetImagesRequest, opts ...grpc.CallOption) (*GetImagesResponse, error)
+	GetRandomImage(ctx context.Context, in *GetRandomImageRequest, opts ...grpc.CallOption) (*GetRandomImageResponse, error)
+	AddTagsToImage(ctx context.Context, in *AddTagToImageRequest, opts ...grpc.CallOption) (*AddTagToImageResponse, error)
 }
 
 type iCCClient struct {
@@ -43,18 +45,36 @@ func (c *iCCClient) IssuePreSignUpload(ctx context.Context, in *PreSignObjectReq
 	return out, nil
 }
 
-func (c *iCCClient) IssuePreSignDownload(ctx context.Context, in *PreSignObjectRequest, opts ...grpc.CallOption) (*PreSignObjectResponse, error) {
-	out := new(PreSignObjectResponse)
-	err := c.cc.Invoke(ctx, "/icc.ICC/IssuePreSignDownload", in, out, opts...)
+func (c *iCCClient) CompleteUpload(ctx context.Context, in *CompleteUploadRequest, opts ...grpc.CallOption) (*CompleteUploadResponse, error) {
+	out := new(CompleteUploadResponse)
+	err := c.cc.Invoke(ctx, "/icc.ICC/CompleteUpload", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iCCClient) UpsertImageWithTags(ctx context.Context, in *UpsertImageRequest, opts ...grpc.CallOption) (*UpsertImageResponse, error) {
-	out := new(UpsertImageResponse)
-	err := c.cc.Invoke(ctx, "/icc.ICC/UpsertImageWithTags", in, out, opts...)
+func (c *iCCClient) GetImage(ctx context.Context, in *GetImagesRequest, opts ...grpc.CallOption) (*GetImagesResponse, error) {
+	out := new(GetImagesResponse)
+	err := c.cc.Invoke(ctx, "/icc.ICC/GetImage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iCCClient) GetRandomImage(ctx context.Context, in *GetRandomImageRequest, opts ...grpc.CallOption) (*GetRandomImageResponse, error) {
+	out := new(GetRandomImageResponse)
+	err := c.cc.Invoke(ctx, "/icc.ICC/GetRandomImage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iCCClient) AddTagsToImage(ctx context.Context, in *AddTagToImageRequest, opts ...grpc.CallOption) (*AddTagToImageResponse, error) {
+	out := new(AddTagToImageResponse)
+	err := c.cc.Invoke(ctx, "/icc.ICC/AddTagsToImage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,10 +87,12 @@ func (c *iCCClient) UpsertImageWithTags(ctx context.Context, in *UpsertImageRequ
 type ICCServer interface {
 	// Issue Pre-Sign request
 	// For Pre-Sign upload request, the client should send HTTP PUT request
-	// For Pre-Sign download request, the client should send HTTP GET request
+	// ~~For Pre-Sign download request, the client should send HTTP GET request~~
 	IssuePreSignUpload(context.Context, *PreSignObjectRequest) (*PreSignObjectResponse, error)
-	IssuePreSignDownload(context.Context, *PreSignObjectRequest) (*PreSignObjectResponse, error)
-	UpsertImageWithTags(context.Context, *UpsertImageRequest) (*UpsertImageResponse, error)
+	CompleteUpload(context.Context, *CompleteUploadRequest) (*CompleteUploadResponse, error)
+	GetImage(context.Context, *GetImagesRequest) (*GetImagesResponse, error)
+	GetRandomImage(context.Context, *GetRandomImageRequest) (*GetRandomImageResponse, error)
+	AddTagsToImage(context.Context, *AddTagToImageRequest) (*AddTagToImageResponse, error)
 	mustEmbedUnimplementedICCServer()
 }
 
@@ -81,11 +103,17 @@ type UnimplementedICCServer struct {
 func (UnimplementedICCServer) IssuePreSignUpload(context.Context, *PreSignObjectRequest) (*PreSignObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IssuePreSignUpload not implemented")
 }
-func (UnimplementedICCServer) IssuePreSignDownload(context.Context, *PreSignObjectRequest) (*PreSignObjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IssuePreSignDownload not implemented")
+func (UnimplementedICCServer) CompleteUpload(context.Context, *CompleteUploadRequest) (*CompleteUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompleteUpload not implemented")
 }
-func (UnimplementedICCServer) UpsertImageWithTags(context.Context, *UpsertImageRequest) (*UpsertImageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpsertImageWithTags not implemented")
+func (UnimplementedICCServer) GetImage(context.Context, *GetImagesRequest) (*GetImagesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetImage not implemented")
+}
+func (UnimplementedICCServer) GetRandomImage(context.Context, *GetRandomImageRequest) (*GetRandomImageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRandomImage not implemented")
+}
+func (UnimplementedICCServer) AddTagsToImage(context.Context, *AddTagToImageRequest) (*AddTagToImageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddTagsToImage not implemented")
 }
 func (UnimplementedICCServer) mustEmbedUnimplementedICCServer() {}
 
@@ -118,38 +146,74 @@ func _ICC_IssuePreSignUpload_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ICC_IssuePreSignDownload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PreSignObjectRequest)
+func _ICC_CompleteUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompleteUploadRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ICCServer).IssuePreSignDownload(ctx, in)
+		return srv.(ICCServer).CompleteUpload(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/icc.ICC/IssuePreSignDownload",
+		FullMethod: "/icc.ICC/CompleteUpload",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ICCServer).IssuePreSignDownload(ctx, req.(*PreSignObjectRequest))
+		return srv.(ICCServer).CompleteUpload(ctx, req.(*CompleteUploadRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ICC_UpsertImageWithTags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpsertImageRequest)
+func _ICC_GetImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetImagesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ICCServer).UpsertImageWithTags(ctx, in)
+		return srv.(ICCServer).GetImage(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/icc.ICC/UpsertImageWithTags",
+		FullMethod: "/icc.ICC/GetImage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ICCServer).UpsertImageWithTags(ctx, req.(*UpsertImageRequest))
+		return srv.(ICCServer).GetImage(ctx, req.(*GetImagesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ICC_GetRandomImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRandomImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ICCServer).GetRandomImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/icc.ICC/GetRandomImage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ICCServer).GetRandomImage(ctx, req.(*GetRandomImageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ICC_AddTagsToImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddTagToImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ICCServer).AddTagsToImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/icc.ICC/AddTagsToImage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ICCServer).AddTagsToImage(ctx, req.(*AddTagToImageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -166,12 +230,20 @@ var ICC_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ICC_IssuePreSignUpload_Handler,
 		},
 		{
-			MethodName: "IssuePreSignDownload",
-			Handler:    _ICC_IssuePreSignDownload_Handler,
+			MethodName: "CompleteUpload",
+			Handler:    _ICC_CompleteUpload_Handler,
 		},
 		{
-			MethodName: "UpsertImageWithTags",
-			Handler:    _ICC_UpsertImageWithTags_Handler,
+			MethodName: "GetImage",
+			Handler:    _ICC_GetImage_Handler,
+		},
+		{
+			MethodName: "GetRandomImage",
+			Handler:    _ICC_GetRandomImage_Handler,
+		},
+		{
+			MethodName: "AddTagsToImage",
+			Handler:    _ICC_AddTagsToImage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

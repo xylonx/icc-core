@@ -4,62 +4,94 @@ option go_package = "github.com/xylonx/icc-core/internal/pb/icc";
 
 package icc;
 
+message RichImageInfo {
+    string ImageURL      = 1;
+    string ImageID       = 2;
+    repeated string Tags = 3;
+    int64 timestamp      = 4;
+}
+
+message GetImagesRequest {
+    // Query images before.
+    // Using Linux timestamp format
+    int64 Before = 1;
+    // The tags that queried images should contains
+    repeated string Tags = 2;
+    // Result number limit
+    uint32 Limit = 3;
+}
+
+message GetImagesResponse {
+    repeated RichImageInfo Images = 2;
+}
+
+message GetRandomImageRequest {
+    repeated string Tags = 1;
+    int32 Limit          = 2;
+}
+
+message GetRandomImageResponse {
+    repeated RichImageInfo Images = 2;
+}
+
 message PreSignObjectRequest {
     // ObjectID - generally, it is equal to filename
     //
     // For better robustness, ICC will generate an unique ID to identify the object.
     // Using ForceObjectID and specifying ObjectID to override this behavior and
     // defined the objectID by yourself.
-    optional bool ForceObjectID = 3;
-    optional string ObjectID    = 1;
+    // optional bool ForceObjectID = 3;
+    // optional string ObjectID = 1;
 
     // ExpireSeconds - specifies how long the object will expire
-    uint32 ExpireSeconds = 2;
+    // uint32 ExpireSeconds = 2;
+
+    string ImageType = 5;
+    string MD5Sum    = 6;
 }
 
 message PreSignObjectResponse {
     // Status - more specifically, the StatusCode to identity the process status
     // generally, Status == 0 means request successes.
-    int32 Status     = 1;
-    string Message   = 2;
-    PreSignData Data = 3;
+    // int32 Status     = 1;
+    // string Message   = 2;
+    // PreSignData Data = 3;
+
+    string PreSignedURI = 5;
+    string ImageID      = 6;
 }
 
-message PreSignData {
-    // ObjectID - the unique ID of the object
-    // If ForceObjectID is false, the ObjectID is the unique ID generate by ICC
-    // else, the objectID is the ID defined in PreSignObjectRequest
-    string ObjectID = 1;
+message CompleteUploadRequest {
+    string ImageID       = 2;
+    string ExternalID    = 3;
+    repeated string Tags = 4;
 }
 
-message UpsertImageRequest {
-    string ObjectID   = 1;
-    repeated Tag Tags = 2;
-
-    // ExternalID - optional ID to identity an image.
-    // Usually, it is no need to set it unless user wants.
-    optional string ExternalID = 3;
+message CompleteUploadResponse {
+    string ImageID       = 2;
+    string ImageURL      = 3;
+    repeated string Tags = 4;
 }
 
-message Tag {
-    // Name - typically, using English as its standard name
-    string Name           = 1;
-    repeated string Alias = 2;
+message AddTagToImageRequest {
+    string ImageID       = 1;
+    repeated string Tags = 2;
 }
 
-message UpsertImageResponse {
-    // Status - more specifically, the StatusCode to identity the process status
-    // generally, Status == 0 means request successes.
-    int32 Status   = 1;
-    string Message = 2;
+message AddTagToImageResponse {
+    string ImageID       = 2;
+    repeated string Tags = 3;
 }
 
 service ICC {
     // Issue Pre-Sign request
     // For Pre-Sign upload request, the client should send HTTP PUT request
-    // For Pre-Sign download request, the client should send HTTP GET request
+    // ~~For Pre-Sign download request, the client should send HTTP GET request~~
     rpc IssuePreSignUpload(PreSignObjectRequest) returns (PreSignObjectResponse);
-    rpc IssuePreSignDownload(PreSignObjectRequest) returns (PreSignObjectResponse);
+    rpc CompleteUpload(CompleteUploadRequest) returns (CompleteUploadResponse);
 
-    rpc UpsertImageWithTags(UpsertImageRequest) returns (UpsertImageResponse);
+    rpc GetImage(GetImagesRequest) returns (GetImagesResponse);
+    rpc GetRandomImage(GetRandomImageRequest) returns (GetRandomImageResponse);
+
+    rpc AddTagsToImage(AddTagToImageRequest) returns (AddTagToImageResponse);
 }
