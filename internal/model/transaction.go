@@ -185,12 +185,18 @@ func DeleteRichImage(ctx context.Context, imageID, token string) error {
 // ~~2) make rich_image as a meterialed view~~
 // using natural join instead
 // 3) replace below random select to this: `select * from rich_image tablesample system_rows(1);`
-func GetRandomImages(ctx context.Context, _ []string) (RichImage, error) {
+func GetRandomImages(ctx context.Context, tags []string, limit int) ([]RichImage, error) {
 	db := core.DB.WithContext(ctx)
 
-	img := RichImage{}
+	img := []RichImage{}
 
-	if err := db.Raw("select image.*, array_remove(array_agg(distinct tag_name order by tag_name), NULL) as tags from image tablesample system_rows(1) natural join image_tag_relation group by image.image_id").Scan(&img).Error; err != nil { //nolint:lll
+	if tags == nil {
+		if err := db.Raw("select image.*, array_remove(array_agg(distinct tag_name order by tag_name), NULL) as tags from image tablesample system_rows(?) natural join image_tag_relation group by image.image_id", limit).Scan(&img).Error; err != nil { //nolint:lll
+			return img, err
+		}
+	}
+
+	if err := db.Raw("select * from (select image.*, array_remove(array_agg(distinct tag_name order by tag_name), NULL) as tags from image tablesample system_rows(?) natural join image_tag_relation group by image.image_id) as rich_image where tags @> ?", limit, tags).Scan(&img).Error; err != nil { //nolint:lll
 		return img, err
 	}
 

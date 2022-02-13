@@ -120,14 +120,14 @@ func GetRandomImageHandler(ctx *gin.Context) {
 		tags = strings.Split(req.Tag, ",")
 	}
 
-	image, err := model.GetRandomImages(ctx.Request.Context(), tags)
+	image, err := model.GetRandomImages(ctx.Request.Context(), tags, 1)
 	if err != nil {
 		zapx.Error("get random images failed", zap.Error(err))
 		respDBError(ctx, err)
 		return
 	}
 
-	uri := core.S3Client.ConstructDownloadURL(ctx.Request.Context(), image.ImageID)
+	uri := core.S3Client.ConstructDownloadURL(ctx.Request.Context(), image[0].ImageID)
 	ctx.Redirect(http.StatusFound, uri)
 }
 
