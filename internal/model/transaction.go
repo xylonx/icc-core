@@ -40,15 +40,21 @@ func CheckImageExists(ctx context.Context, md5 string) error {
 	return i.checkMD5(db)
 }
 
-func GetRichImages(ctx context.Context, before time.Time, tags []string, limit int) ([]RichImage, error) {
+func GetRichImages(ctx context.Context, before time.Time, tags []int32, limit int) ([]RichImage, error) {
 	db := core.DB.WithContext(ctx)
-	i := &RichImage{UpdatedAt: before, Limit: limit, Tags: tags}
+	i := &RichImage{UpdatedAt: before, Limit: limit, TagIds: tags}
 	return i.getRichImages(db)
 }
 
-func GetALlTags(ctx context.Context) ([]Tag, error) {
+func GetAllTags(ctx context.Context) ([]Tag, error) {
 	db := core.DB.WithContext(ctx)
 	return getAllTags(db)
+}
+
+// UpdateTagI19n - return update failed TagID
+func UpdateTagI18n(ctx context.Context, tags []Tag) error {
+	db := core.DB.WithContext(ctx)
+	return updateTags(db, tags)
 }
 
 func GeneratePresignedUploadURL(ctx context.Context, mime, md5 string) (imageID, uri string, err error) {
@@ -75,16 +81,20 @@ func GeneratePresignedUploadURL(ctx context.Context, mime, md5 string) (imageID,
 	return imageID, req.URL, nil
 }
 
-func DeleteTagsForImage(ctx context.Context, imageID string, tags []string) error {
+func DeleteTagsForImage(ctx context.Context, imageID string, tags []Tag) error {
 	db := core.DB.WithContext(ctx)
-	return deleteTagsForImage(db, imageID, tags)
+	tagIds := make([]int32, 0, len(tags))
+	for i := range tags {
+		tagIds = append(tagIds, tags[i].ID)
+	}
+	return deleteTagsForImage(db, imageID, tagIds)
 }
 
 /*
 	below are complex sql needing trancation supports.
 */
 
-func InsertRichImage(ctx context.Context, token, imageID, md5 string, tags []string, imgBytes int64) error {
+func InsertRichImage(ctx context.Context, token, imageID, md5 string, tags []Tag, imgBytes int64) error {
 	db := core.DB.WithContext(ctx)
 	i := &Image{MD5Sum: md5, ImageID: imageID, Owner: token}
 	t := &AuthToken{Token: token, UploadingBytes: imgBytes}
@@ -116,7 +126,7 @@ func InsertRichImage(ctx context.Context, token, imageID, md5 string, tags []str
 	return nil
 }
 
-func AddTags(ctx context.Context, imageID string, tags []string) error {
+func AddTags(ctx context.Context, imageID string, tags []Tag) error {
 	tx := core.DB.WithContext(ctx).Begin()
 	if err := insertTags(tx, tags); err != nil {
 		tx.Rollback()
@@ -175,8 +185,7 @@ func DeleteRichImage(ctx context.Context, imageID, token string) error {
 	return nil
 }
 
-// ~~TODO~~: select a random row by using an auto-increment key now.
-// DONE
+// TODO: select tag
 
 // it is not efficient but suit for small dataset.
 // for big dataset, using tablesample like below for efficiency
@@ -185,7 +194,7 @@ func DeleteRichImage(ctx context.Context, imageID, token string) error {
 // ~~2) make rich_image as a meterialed view~~
 // using natural join instead
 // 3) replace below random select to this: `select * from rich_image tablesample system_rows(1);`
-func GetRandomImages(ctx context.Context, tags []string, limit int) ([]RichImage, error) {
+func GetRandomImages(ctx context.Context, tags []int32, limit int) ([]RichImage, error) {
 	db := core.DB.WithContext(ctx)
 
 	img := []RichImage{}
