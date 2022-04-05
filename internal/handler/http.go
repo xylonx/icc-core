@@ -1,10 +1,8 @@
 package handler
 
 import (
-	"context"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -22,23 +20,46 @@ var (
 	ErrPermissionDenied   = errors.New("permission denied")
 )
 
+type Tag struct {
+	TagID     int32  `json:"tag_id"`
+	TagNameEN string `json:"tag_name_en"`
+	TagNameCN string `json:"tag_name_cn"`
+	TagNameJP string `json:"tag_name_jp"`
+}
+
+func modelTag2Tag(ts []model.Tag) []Tag {
+	tags := make([]Tag, 0, len(ts))
+	for i := range ts {
+		tags = append(tags, Tag{TagID: ts[i].ID, TagNameEN: ts[i].TagNameEN, TagNameCN: ts[i].TagNameCN, TagNameJP: ts[i].TagNameJP})
+	}
+	return tags
+}
+
+func tag2ModelTag(ts []Tag) []model.Tag {
+	tags := make([]model.Tag, 0, len(ts))
+	for i := range ts {
+		tags = append(tags, model.Tag{ID: ts[i].TagID, TagNameEN: ts[i].TagNameEN, TagNameCN: ts[i].TagNameCN, TagNameJP: ts[i].TagNameJP})
+	}
+	return tags
+}
+
 type GetImagesRequest struct {
 	Before time.Time `json:"before" form:"before" time_format:"unix"`
-	Tag    string    `json:"tag" form:"tag"`
+	TagIds []int32   `json:"tag_ids" form:"tag_ids"`
 	Limit  uint      `json:"limit" form:"limit"`
 }
 
 type GetImageResponse struct {
-	ImageURL  string   `json:"image_url"`
-	ImageID   string   `json:"image_id"`
-	Tags      []string `json:"tags"`
-	Timestamp int64    `json:"timestamp"`
+	ImageURL  string  `json:"image_url"`
+	ImageID   string  `json:"image_id"`
+	TagIds    []int32 `json:"tag_ids"`
+	Timestamp int64   `json:"timestamp"`
 }
 
 type AddImageRequest struct {
-	ImageID    string   `json:"image_id"`
-	ExternalID string   `json:"external_id"`
-	Tags       []string `json:"tags"`
+	ImageID    string `json:"image_id"`
+	ExternalID string `json:"external_id"`
+	Tags       []Tag  `json:"tags"`
 }
 
 type GeneratePreSignRequest struct {
@@ -48,30 +69,8 @@ type GeneratePreSignRequest struct {
 }
 
 type ImageTagRequest struct {
-	ImageID string   `json:"image_id"`
-	Tags    []string `json:"tags"`
-}
-
-func HttpAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			zapx.Error("auth header missing", zap.String("Authorization", authHeader))
-			respAbortWithUnauthError(c, ErrAuthHeaderNotFound)
-			return
-		}
-
-		token := authHeader[7:]
-
-		if err := model.CheckTokenExists(c.Request.Context(), token); err != nil {
-			zapx.Error("check token exists failed", zap.Error(err), zap.String("token", token))
-			respAbortWithUnauthError(c, err)
-			return
-		}
-
-		ctx := context.WithValue(c.Request.Context(), "ICCAuthToken", token) // nolint:staticcheck
-		c.Request = c.Request.Clone(ctx)
-	}
+	ImageID string `json:"image_id"`
+	Tags    []Tag  `json:"tags"`
 }
 
 func GetImagesHandler(ctx *gin.Context) {
@@ -81,12 +80,7 @@ func GetImagesHandler(ctx *gin.Context) {
 		return
 	}
 
-	var tags []string
-	if req.Tag != "" {
-		tags = strings.Split(req.Tag, ",")
-	}
-
-	images, err := model.GetRichImages(ctx.Request.Context(), req.Before, tags, int(req.Limit))
+	images, err := model.GetRichImages(ctx.Request.Context(), req.Before, req.TagIds, int(req.Limit))
 	if err != nil {
 		respDBError(ctx, err)
 		return
@@ -101,7 +95,7 @@ func GetImagesHandler(ctx *gin.Context) {
 	for i := range images {
 		resp[i].ImageURL = core.S3Client.ConstructDownloadURL(ctx.Request.Context(), images[i].ImageID)
 		resp[i].ImageID = images[i].ImageID
-		resp[i].Tags = images[i].Tags
+		resp[i].TagIds = images[i].TagIds
 		resp[i].Timestamp = images[i].UpdatedAt.Unix()
 	}
 
@@ -115,12 +109,7 @@ func GetRandomImageHandler(ctx *gin.Context) {
 		return
 	}
 
-	var tags []string
-	if req.Tag != "" {
-		tags = strings.Split(req.Tag, ",")
-	}
-
-	image, err := model.GetRandomImages(ctx.Request.Context(), tags, 1)
+	image, err := model.GetRandomImages(ctx.Request.Context(), req.TagIds, 1)
 	if err != nil {
 		zapx.Error("get random images failed", zap.Error(err))
 		respDBError(ctx, err)
@@ -148,19 +137,19 @@ func AddImageHandler(ctx *gin.Context) {
 		return
 	}
 
-	token := ctx.Request.Context().Value("ICCAuthToken").(string) //nolint:forcetypeassert
+	token := mustGetTokenFromCtx(ctx.Request.Context())
 	md5 := resp.Metadata["x-icc-md5"]
 
-	err = model.InsertRichImage(ctx.Request.Context(), token, req.ImageID, md5, req.Tags, resp.ContentLength)
+	err = model.InsertRichImage(ctx.Request.Context(), token, req.ImageID, md5, tag2ModelTag(req.Tags), resp.ContentLength)
 	if err != nil {
 		respDBError(ctx, err)
 		return
 	}
 
 	respOK(ctx, struct {
-		ImageID  string   `json:"image_id"`
-		ImageURL string   `json:"image_url"`
-		Tags     []string `json:"tags"`
+		ImageID  string `json:"image_id"`
+		ImageURL string `json:"image_url"`
+		Tags     []Tag  `json:"tags"`
 	}{
 		ImageID:  req.ImageID,
 		ImageURL: core.S3Client.ConstructDownloadURL(ctx.Request.Context(), req.ImageID),
@@ -171,7 +160,7 @@ func AddImageHandler(ctx *gin.Context) {
 func DeleteRichImageHandler(ctx *gin.Context) {
 	imageID := ctx.Param("id")
 
-	token := ctx.Request.Context().Value("ICCAuthToken").(string) //nolint:forcetypeassert
+	token := mustGetTokenFromCtx(ctx.Request.Context())
 	if err := model.DeleteRichImage(ctx.Request.Context(), imageID, token); err != nil {
 		zapx.Error("delete rich image failed", zap.Error(err))
 		respDBError(ctx, err)
@@ -212,14 +201,14 @@ func GeneratePreSignUpload(ctx *gin.Context) {
 }
 
 func GetAllTags(ctx *gin.Context) {
-	tags, err := model.GetALlTags(ctx.Request.Context())
+	tags, err := model.GetAllTags(ctx.Request.Context())
 	if err != nil {
 		zapx.Error("get all tags failed", zap.Error(err))
 		respDBError(ctx, err)
 		return
 	}
 
-	respOK(ctx, tags)
+	respOK(ctx, modelTag2Tag(tags))
 }
 
 func AddTagToImage(ctx *gin.Context) {
@@ -229,8 +218,8 @@ func AddTagToImage(ctx *gin.Context) {
 		return
 	}
 
-	ri := model.RichImage{ImageID: req.ImageID, Tags: req.Tags}
-	if err := model.AddTags(ctx.Request.Context(), req.ImageID, req.Tags); err != nil {
+	ri := model.RichImage{ImageID: req.ImageID}
+	if err := model.AddTags(ctx.Request.Context(), req.ImageID, tag2ModelTag(req.Tags)); err != nil {
 		zapx.Error("add tags to image failed", zap.Error(err))
 		respDBError(ctx, err)
 		return
@@ -246,8 +235,8 @@ func DeleteTagToImage(ctx *gin.Context) {
 		return
 	}
 
-	ri := model.RichImage{ImageID: req.ImageID, Tags: req.Tags}
-	if err := model.DeleteTagsForImage(ctx.Request.Context(), req.ImageID, req.Tags); err != nil {
+	ri := model.RichImage{ImageID: req.ImageID}
+	if err := model.DeleteTagsForImage(ctx.Request.Context(), req.ImageID, tag2ModelTag(req.Tags)); err != nil {
 		zapx.Error("delete tags to image failed", zap.Error(err))
 		respDBError(ctx, err)
 		return
@@ -256,8 +245,7 @@ func DeleteTagToImage(ctx *gin.Context) {
 }
 
 func GenereateToken(ctx *gin.Context) {
-	authToken := ctx.Request.Context().Value("ICCAuthToken").(string) // nolint:forcetypeassert
-	if authToken != config.Config.Application.AdminToken {
+	if mustGetTokenFromCtx(ctx.Request.Context()) != config.Config.Application.AdminToken {
 		respAbortWithUnauthError(ctx, ErrPermissionDenied)
 		return
 	}
@@ -277,4 +265,22 @@ func GenereateToken(ctx *gin.Context) {
 	}
 
 	respOK(ctx, id)
+}
+
+func I18nTagsHandler(ctx *gin.Context) {
+	req := new(struct {
+		Tags []Tag `json:"tags"`
+	})
+	if err := ctx.ShouldBindJSON(req); err != nil {
+		zapx.Error("bind i18n tag failed", zap.Error(err))
+		respParamBindingError(ctx, err)
+		return
+	}
+
+	if err := model.UpdateTagI18n(ctx.Request.Context(), tag2ModelTag(req.Tags)); err != nil {
+		zapx.Error("update tag i18n failed", zap.Error(err))
+		respDBError(ctx, err)
+		return
+	}
+	respOK(ctx, req.Tags)
 }

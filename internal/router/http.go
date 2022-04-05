@@ -42,13 +42,15 @@ func InitHttpServer(o *HttpOption) *http.Server {
 	})
 
 	auth.POST("/image/complete", handler.AddImageHandler)
-	auth.POST("/image/upload", handler.GeneratePreSignUpload)
+	auth.POST("/image/sign_url", handler.GeneratePreSignUpload)
 	auth.DELETE("/image/:id", handler.DeleteRichImageHandler)
 
 	auth.POST("/image/tag", handler.AddTagToImage)
 	auth.DELETE("/image/tag", handler.DeleteTagToImage)
 
 	auth.POST("/token", handler.GenereateToken)
+
+	auth.PUT("/tag/i18n", handler.I18nTagsHandler)
 
 	return &http.Server{
 		Addr:         o.Addr,
