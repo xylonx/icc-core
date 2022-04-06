@@ -28,6 +28,12 @@ It provides 2 different type APIs:
 - *protobuf*(in progress)
   > you can find the protobuf file at `proto/icc/icc.proto`.
 
+## API Doc
+
+available API doc:
+
+- [v0.2.0](./doc/api/api-v0.2.0.yaml)
+
 ## How to Deploy
 
 **base service need**

@@ -1,0 +1,791 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "ImageCollectionCenter",
+    "description": "",
+    "version": "0.2.0"
+  },
+  "tags": [
+    {
+      "name": "auth"
+    },
+    {
+      "name": "auth/image"
+    },
+    {
+      "name": "auth/token"
+    },
+    {
+      "name": "auth/tag"
+    },
+    {
+      "name": "public"
+    },
+    {
+      "name": "public/image"
+    },
+    {
+      "name": "public/tag"
+    }
+  ],
+  "paths": {
+    "/image/complete": {
+      "post": {
+        "summary": "AddImage",
+        "x-apifox-folder": "auth/image",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "auth/image"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image_id": {
+                    "type": "string"
+                  },
+                  "external_id": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "$ref": "#/components/schemas/tag"
+                  }
+                },
+                "required": [
+                  "image_id",
+                  "tags"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "examples": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tags": {
+      "get": {
+        "summary": "GetAllTags",
+        "x-apifox-folder": "public/tag",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "public/tag"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/tag"
+                      }
+                    }
+                  },
+                  "required": [
+                    "status_code",
+                    "message",
+                    "data"
+                  ]
+                },
+                "examples": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tag/i18n": {
+      "put": {
+        "summary": "I18NTag",
+        "x-apifox-folder": "auth/tag",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "auth/tag"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/tag"
+                    }
+                  }
+                },
+                "required": [
+                  "tags"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/tag"
+                      }
+                    }
+                  },
+                  "required": [
+                    "status_code",
+                    "message",
+                    "data"
+                  ]
+                },
+                "examples": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/image/tag": {
+      "delete": {
+        "summary": "DeleteTagToImage",
+        "x-apifox-folder": "auth/tag",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "auth/tag"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image_id": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/tag"
+                    }
+                  }
+                },
+                "required": [
+                  "image_id",
+                  "tags"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "image_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "image_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status_code",
+                    "message",
+                    "data"
+                  ]
+                },
+                "examples": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "AddTagToImage",
+        "x-apifox-folder": "auth/tag",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "auth/tag"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image_id": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/tag"
+                    }
+                  }
+                },
+                "required": [
+                  "image_id",
+                  "tags"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "image_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "image_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status_code",
+                    "message",
+                    "data"
+                  ]
+                },
+                "examples": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images": {
+      "get": {
+        "summary": "GetAllImages",
+        "x-apifox-folder": "public/image",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "public/image"
+        ],
+        "parameters": [
+          {
+            "name": "before",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag_ids",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exclude_tag_ids",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/image"
+                      }
+                    }
+                  },
+                  "required": [
+                    "status_code",
+                    "message",
+                    "data"
+                  ]
+                },
+                "examples": {
+                  "1": {
+                    "summary": "成功示例 ",
+                    "value": {
+                      "status_code": 0,
+                      "message": "ok",
+                      "data": [
+                        {
+                          "image_url": "https://s3.xylonx.com/file/pichost-test/838b66b0-7a85-11ec-830c-9668e45c50b0.png",
+                          "image_id": "838b66b0-7a85-11ec-830c-9668e45c50b0.png",
+                          "tag_ids": [
+                            8
+                          ],
+                          "updated_at": 1642747445
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/token": {
+      "post": {
+        "summary": "AddToken",
+        "x-apifox-folder": "auth/token",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "auth/token"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status_code",
+                    "message",
+                    "data"
+                  ]
+                },
+                "examples": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ping": {
+      "get": {
+        "summary": "ping",
+        "x-apifox-folder": "auth",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "auth"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "examples": {
+                  "1": {
+                    "summary": "成功示例 ",
+                    "value": "pong"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/image/{:id}": {
+      "delete": {
+        "summary": "DeleteImage",
+        "x-apifox-folder": "auth/image",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "auth/image"
+        ],
+        "parameters": [
+          {
+            "name": ":id",
+            "in": "path",
+            "description": "imageID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "examples": {
+                  "1": {
+                    "summary": "成功示例 ",
+                    "value": "ok"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/image/sign_url": {
+      "post": {
+        "summary": "GeneratePreSignURL",
+        "x-apifox-folder": "auth/image",
+        "x-apifox-status": "released",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "auth/image"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image_type": {
+                    "type": "string"
+                  },
+                  "md5_sum": {
+                    "type": "string"
+                  },
+                  "external_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "image_type",
+                  "md5_sum"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "presigned_uri": {
+                          "type": "string"
+                        },
+                        "image_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "presigned_uri",
+                        "image_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status_code",
+                    "message",
+                    "data"
+                  ]
+                },
+                "examples": {
+                  "1": {
+                    "summary": "成功示例 ",
+                    "value": {
+                      "status_code": 0,
+                      "message": "ok",
+                      "data": {
+                        "presigned_uri": "https://s3.us-west-002.backblazeb2.com/pichost-test/2e0bd56c-a2a8-11ec-82fa-9668e45c50b0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=002f476372dbac00000000001%2F20220313%2Fus-west-002%2Fs3%2Faws4_request&X-Amz-Date=20220313T083255Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host%3Bx-amz-meta-x-icc-md5&x-id=PutObject&X-Amz-Signature=e9a95d73733eaf25c26651a371b14ad41fe11e4e5941abaa28f90969ce233649",
+                        "image_id": "2e0bd56c-a2a8-11ec-82fa-9668e45c50b0.png"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "image": {
+        "type": "object",
+        "properties": {
+          "image_url": {
+            "type": "string"
+          },
+          "image_id": {
+            "type": "string"
+          },
+          "tag_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "updated_at": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "image_url",
+          "image_id",
+          "tag_ids",
+          "updated_at"
+        ],
+        "x-apifox-folder": ""
+      },
+      "tag": {
+        "type": "object",
+        "properties": {
+          "tag_id": {
+            "type": "integer"
+          },
+          "tag_name_en": {
+            "type": "string"
+          },
+          "tag_name_cn": {
+            "type": "string"
+          },
+          "tag_name_jp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tag_id",
+          "tag_name_en",
+          "tag_name_cn",
+          "tag_name_jp"
+        ],
+        "x-apifox-folder": ""
+      }
+    }
+  }
+}
