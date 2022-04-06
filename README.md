@@ -121,7 +121,7 @@ version: '3.9'
 
 services:
   icc-core:
-    image: xylonx/icc-core:v0.1.1
+    image: xylonx/icc-core:${version:-latest}
     container_name: icc-core
     volumes:
       - #{fill config file path}:/opt/icc-core/config.yaml
