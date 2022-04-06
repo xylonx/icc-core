@@ -31,13 +31,15 @@ type RichImage struct {
 	MD5Sum     string        `gorm:"column:md5_sum;unique" json:"md5_sum"` // for shrinking file duplication
 	TagIds     pq.Int32Array `gorm:"column:tag_ids;type:integer[]" json:"tag_ids"`
 	Limit      int           `gorm:"-"`
+
+	Tags []Tag `gorm:"-"`
 }
 
 func (*RichImage) TableName() string {
 	return "rich_image"
 }
 
-func (i *RichImage) getRichImages(db *gorm.DB) (images []RichImage, err error) {
+func (i *RichImage) getRichImages(db *gorm.DB, excludeTagIds []int32) (images []RichImage, err error) {
 	if i == nil {
 		return nil, ErrNilMethodReceiver
 	}
@@ -49,12 +51,16 @@ func (i *RichImage) getRichImages(db *gorm.DB) (images []RichImage, err error) {
 		i.Limit = queryMaxLimit
 	}
 
-	if i.TagIds == nil {
-		err = db.Table(i.TableName()).Where("updated_at < ?", i.UpdatedAt).Order("updated_at desc").Limit(i.Limit).Scan(&images).Error
-	} else {
-		err = db.Table(i.TableName()).Where("updated_at < ? AND tags @> ?", i.UpdatedAt, pq.Array(i.TagIds)).
-			Order("updated_at desc").Limit(i.Limit).Scan(&images).Error
+	db = db.Debug().Table(i.TableName()).Where("updated_at < ?", i.UpdatedAt)
+	if i.TagIds != nil {
+		db = db.Where("tag_ids @> ?", pq.Array(i.TagIds))
 	}
+	if excludeTagIds != nil {
+		db = db.Not("tag_ids && ?", pq.Array(excludeTagIds))
+	}
+	db = db.Order("updated_at desc").Limit(i.Limit)
+	err = db.Scan(&images).Error
+
 	if err != nil {
 		return
 	}

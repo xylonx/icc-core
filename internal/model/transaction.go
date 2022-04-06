@@ -40,10 +40,10 @@ func CheckImageExists(ctx context.Context, md5 string) error {
 	return i.checkMD5(db)
 }
 
-func GetRichImages(ctx context.Context, before time.Time, tags []int32, limit int) ([]RichImage, error) {
+func GetRichImages(ctx context.Context, before time.Time, includeTagIds, excludeTagIds []int32, limit int) ([]RichImage, error) {
 	db := core.DB.WithContext(ctx)
-	i := &RichImage{UpdatedAt: before, Limit: limit, TagIds: tags}
-	return i.getRichImages(db)
+	i := &RichImage{UpdatedAt: before, Limit: limit, TagIds: includeTagIds}
+	return i.getRichImages(db, excludeTagIds)
 }
 
 func GetAllTags(ctx context.Context) ([]Tag, error) {

@@ -44,16 +44,17 @@ func tag2ModelTag(ts []Tag) []model.Tag {
 }
 
 type GetImagesRequest struct {
-	Before time.Time `json:"before" form:"before" time_format:"unix"`
-	TagIds []int32   `json:"tag_ids" form:"tag_ids"`
-	Limit  uint      `json:"limit" form:"limit"`
+	Before        time.Time `json:"before" form:"before" time_format:"unix"`
+	TagIds        []int32   `json:"tag_ids" form:"tag_ids"`
+	ExcludeTagIds []int32   `json:"exclude_tag_ids" form:"exclude_tag_ids"`
+	Limit         uint      `json:"limit" form:"limit"`
 }
 
 type GetImageResponse struct {
 	ImageURL  string  `json:"image_url"`
 	ImageID   string  `json:"image_id"`
 	TagIds    []int32 `json:"tag_ids"`
-	Timestamp int64   `json:"timestamp"`
+	UpdatedAt int64   `json:"updated_at"`
 }
 
 type AddImageRequest struct {
@@ -80,7 +81,7 @@ func GetImagesHandler(ctx *gin.Context) {
 		return
 	}
 
-	images, err := model.GetRichImages(ctx.Request.Context(), req.Before, req.TagIds, int(req.Limit))
+	images, err := model.GetRichImages(ctx.Request.Context(), req.Before, req.TagIds, req.ExcludeTagIds, int(req.Limit))
 	if err != nil {
 		respDBError(ctx, err)
 		return
@@ -96,7 +97,7 @@ func GetImagesHandler(ctx *gin.Context) {
 		resp[i].ImageURL = core.S3Client.ConstructDownloadURL(ctx.Request.Context(), images[i].ImageID)
 		resp[i].ImageID = images[i].ImageID
 		resp[i].TagIds = images[i].TagIds
-		resp[i].Timestamp = images[i].UpdatedAt.Unix()
+		resp[i].UpdatedAt = images[i].UpdatedAt.Unix()
 	}
 
 	respOK(ctx, resp)
