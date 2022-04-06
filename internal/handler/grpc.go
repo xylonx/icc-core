@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"context"
-	"errors"
-
 	"github.com/xylonx/icc-core/internal/proto/icc"
 )
 
@@ -14,17 +11,17 @@ type ICCServer struct {
 var _ icc.ICCServer = &ICCServer{}
 
 func NewICCServer() icc.ICCServer {
-	return nil
+	return &ICCServer{}
 }
 
-func (s *ICCServer) IssuePreSignUpload(context.Context, *icc.PreSignObjectRequest) (*icc.PreSignObjectResponse, error) {
-	return nil, errors.New("not implemented")
-}
+// func (s *ICCServer) IssuePreSignUpload(context.Context, *icc.PreSignObjectRequest) (*icc.PreSignObjectResponse, error) {
+// 	return nil, errors.New("not implemented")
+// }
 
-func (s *ICCServer) IssuePreSignDownload(context.Context, *icc.PreSignObjectRequest) (*icc.PreSignObjectResponse, error) {
-	return nil, errors.New("not implemented")
-}
+// func (s *ICCServer) IssuePreSignDownload(context.Context, *icc.PreSignObjectRequest) (*icc.PreSignObjectResponse, error) {
+// 	return nil, errors.New("not implemented")
+// }
 
-func (s *ICCServer) UpsertImageWithTags(context.Context, *icc.UpsertImageRequest) (*icc.UpsertImageResponse, error) {
-	return nil, errors.New("not implemented")
-}
+// func (s *ICCServer) UpsertImageWithTags(context.Context, *icc.UpsertImageRequest) (*icc.UpsertImageResponse, error) {
+// 	return nil, errors.New("not implemented")
+// }
