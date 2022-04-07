@@ -51,7 +51,7 @@ func (i *RichImage) getRichImages(db *gorm.DB, excludeTagIds []int32) (images []
 		i.Limit = queryMaxLimit
 	}
 
-	db = db.Debug().Table(i.TableName()).Where("updated_at < ?", i.UpdatedAt)
+	db = db.Table(i.TableName()).Where("updated_at < ?", i.UpdatedAt)
 	if i.TagIds != nil {
 		db = db.Where("tag_ids @> ?", pq.Array(i.TagIds))
 	}
